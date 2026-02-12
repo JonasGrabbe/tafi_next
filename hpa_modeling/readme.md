@@ -1,6 +1,6 @@
 ## Machine-learning workflow and hyperparameter optimization (pipeline continuation)
 
-ML pipeline implemented in the via R scripts (`hyperparam_tuning_core.R`, `run_tuning_example.R`, with shared helpers in `hpa_sdk.R`). The workflow follows the same overall structure :data variants × anatomical aggregation levels × supervised classifiers under repeated stratified resampling), plus**systematic hyperparameter tuning**, a **larger model sweep**, and **higher-repeat resampling during tuning runs** (configurable).
+ML pipeline implemented in the via R scripts (`hyperparam_tuning_core.R`, `run_tuning_example.R`, with shared helpers in `hpa_sdk.R`). The workflow follows the same overall structure :data variants × anatomical aggregation levels × supervised classifiers under repeated stratified resampling) then ** hyperparameter tuning**, a ** 7 model sweep**, and **repeat resampling during tuning runs**.
 
 ------
 
@@ -25,7 +25,7 @@ Each dataset includes:
 - **Level 3:** 5 super-aggregated regions
 - **Level 4:** 3 coarse partitions
 
-The function also stores a reference “skeleton count” per feature (number of expected skeletal units). These counts are used upstream for SPR-derived variables and are saved alongside each tuning run to ensure traceability.
+The function also stores a reference “skeleton count” per feature (number of expected skeletal units). These counts are used later for SPR-derived variables and are saved alongside each tuning run to ensure traceability.
 
 **SPR variable derivation (upstream).** The helper functions in `hpa_sdk.R` (`convertMNEtoVariables_*`) formalize how SPR-derived metrics can be computed from an MNE vector and a skeleton reference table (element counts). Across versions, they implement consistent handling of missing values (NAs → 0), safe division for zero-count cases, and computation of standard taphonomic representation measures including:
 
@@ -60,13 +60,11 @@ All modeling is implemented using **tidymodels workflows** with a task-specific 
 
 1. **ID handling.** `site_name` is assigned role `"ID"` and excluded from the predictor matrix.
 2. **Numeric scaling.** All numeric predictors are rescaled by dividing by 100:
-   [
-   x' = \frac{x}{100}
-   ]
-   This standardizes inputs that are naturally on a 0–100 scale (e.g., percent-based SPR metrics), while remaining compatible with kernel methods, distance-based methods, and neural nets.
-3. **Downsampling for binary tasks.** For the two binary tasks, the recipe optionally applies `themis::step_downsample()` with `under_ratio = 1`, which undersamples the majority class to match the minority class **within each resampling split** (`skip = TRUE`). This prevents information leakage by ensuring balancing is performed only on training folds.
 
-Downsampling is disabled for the four-class task in the current configuration.
+   This standardizes inputs that are naturally on a 0–100 scale (e.g., percent-based SPR metrics).
+3. **Downsampling for binary tasks.** For the two binary tasks, undersamples the majority class to match the minority class **within each resampling split** .
+
+
 
 ------
 
@@ -133,12 +131,6 @@ Evaluation metrics are computed within resampling using yardstick:
   **Ranking metric:** `roc_auc`
 - **Multiclass task (`4class`):** `accuracy`, `f_meas`, `recall`, `precision`
   **Ranking metric:** `accuracy`
-
-The event level is set consistently (`options(yardstick.event_first = "first")`) for binary metrics.
-
-After tuning (`tune_grid()`), configurations are ranked using `show_best(..., metric = ranking_metric, n = Inf)` and the best configuration is selected with `select_best()`.
-
-To provide an interpretable summary for the best configuration, predictions are collected and confusion matrices are computed per resample; these are converted into a **classification report** using the helper `compute_classification_report_from_confmats()` (`hpa_sdk.R`), returning mean and SD for precision/recall/F1 across folds, plus macro and weighted averages.
 
 
 
