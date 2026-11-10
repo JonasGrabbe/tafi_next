@@ -3,7 +3,7 @@
 # Results use three stratified folds and prespecified, fixed model settings.
 
 DATA_ROOT <- "c:/Users/jonas.grabbe/tafi_test-2"
-MODEL_ROOT <- file.path(DATA_ROOT, "modeling_5")
+MODEL_ROOT <- file.path(DATA_ROOT, "main_spr_ml")
 EXCEL_FILE <- file.path(DATA_ROOT, "hspa.xlsx")
 CACHE_ROOT <- file.path(MODEL_ROOT, "ml7_prepared_cache")
 
@@ -24,8 +24,8 @@ models_vec <- c("LogisticRegression", "KNN", "SVM_RBF", "RandomForest")
 
 # Aggregate observations remain in the fitted data. Individual and metadata
 # observations are interpolation donors only, never additional independent sites.
-USE_SMOTE <- FALSE
-USE_METADATA_AUG <- FALSE
+USE_SMOTE <- TRUE
+USE_METADATA_AUG <- TRUE
 SMOTE_USE_MNI <- FALSE
 SMOTE_NEIGHBORS <- 3L
 SYNTHETIC_STRATEGY <- "multiplier" # alternative: "fixed_total"
